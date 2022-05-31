@@ -1,8 +1,10 @@
 package com.example.testpipeline.services;
 
 import com.example.testpipeline.models.BloodOxygenData;
+import com.example.testpipeline.models.BloodPressure;
 import com.example.testpipeline.models.HeartData;
 import com.example.testpipeline.repositories.BloodOxygenRepository;
+import com.example.testpipeline.repositories.BloodPressureDataRepository;
 import com.example.testpipeline.repositories.HeartMonitorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -22,21 +24,18 @@ public class SchedulerService {
     HeartMonitorRepository heartMonitorRepository;
     @Autowired
     BloodOxygenRepository bloodOxygenRepository;
+    @Autowired
+    BloodPressureDataRepository bloodPressureDataRepository;
 
     int mockPatientId[]={2,3,4,5};
 
-    //@Scheduled(cron="0 * * * * *")
-   /* public Runnable medicalData() {
-        Date currentDate= new Date(System.currentTimeMillis());
-        return () -> {
-            HeartDataGen(currentDate);
-            OxygenDataGen(currentDate);
-
-        };
-    }*/
+    /**
+     * runs a scheduler to generate heart rate data at a interval of 1 minutes
+     */
     @Scheduled(cron="0 * * * * *")
     @Async
     public void  HeartDataGen(){
+        heartMonitorRepository.deleteBefore();
         Date currentDate= new Date(System.currentTimeMillis());
         for(int patientId:mockPatientId) {
             int bps = ThreadLocalRandom.current().nextInt(70, 99);
@@ -45,9 +44,14 @@ public class SchedulerService {
         }
 
     }
+
+    /**
+     * runs a scheduler to generate blood oxygen data at the interval of 1 minute
+     */
     @Scheduled(cron="0 * * * * *")
     @Async
     public void OxygenDataGen(){
+        bloodOxygenRepository.deleteBefore();
         Date currentDate= new Date(System.currentTimeMillis());
         for(int patientId:mockPatientId) {
             int bloodOxygen = ThreadLocalRandom.current().nextInt(30, 99);
@@ -56,13 +60,21 @@ public class SchedulerService {
         }
     }
 
+    /**
+     * runs a scheduler to generate systolic and diastolic blood pressure at an interval of 1 min
+     */
+    @Scheduled(cron="0 * * * * *")
+    @Async
+    public void BloodPressureDataGen(){
+        bloodPressureDataRepository.deleteBefore();
+        Date currentDate= new Date(System.currentTimeMillis());
+        for(int patientId:mockPatientId) {
+            int systolic = ThreadLocalRandom.current().nextInt(70, 99);
+            int diastolic= ThreadLocalRandom.current().nextInt(118, 150);
+            BloodPressure bloodPressure = new BloodPressure(systolic,diastolic, patientId, currentDate);
+            bloodPressureDataRepository.save(bloodPressure);
+        }
+    }
+
+
 }
-
-
-
-//produce data through scheduler at random times/fixed interval --done
-//persist the produced data to db--almost done
-//pull the complete or subset of data when requested---not done
-
-//1 ms to produce data
-//another to return data when requested->either of a particular patient or all the patients of a particular doctor--not done
